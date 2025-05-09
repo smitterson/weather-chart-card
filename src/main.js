@@ -184,6 +184,8 @@ subscribeForecastEvents() {
     this.forecasts = event.forecast;
     this.requestUpdate();
     this.drawChart();
+    console.log("received forecasts");
+    console.log(event);
   };
 
   this.forecastSubscriber = this._hass.connection.subscribeMessage(callback, {
@@ -440,7 +442,7 @@ autoscroll() {
     this.autoscrollTimeout = setTimeout(() => {
       this.autoscrollTimeout = null;
       this.updateChart();
-      drawChartOncePerHour();
+      updateChartOncePerHour();
     }, nextHour - now);
   };
 
