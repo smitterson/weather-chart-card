@@ -478,6 +478,9 @@ drawChart({ config, language, weather, forecastItems } = this) {
   }
   const data = this.computeForecastData();
 
+  console.log("drawChart");
+  console.log(data);
+
   var style = getComputedStyle(document.body);
   var backgroundColor = style.getPropertyValue('--card-background-color');
   var textColor = style.getPropertyValue('--primary-text-color');
@@ -669,7 +672,7 @@ drawChart({ config, language, weather, forecastItems } = this) {
                   return time;
               },
           },
-          reverse: document.dir === 'rtl' ? true : false,
+          reverse: document.dir === 'rtl',
         },
         TempAxis: {
           position: 'left',
@@ -750,15 +753,15 @@ drawChart({ config, language, weather, forecastItems } = this) {
 }
 
 computeForecastData({ config, forecastItems } = this) {
-  var forecast = this.forecasts ? this.forecasts.slice(0, forecastItems) : [];
-  var roundTemp = config.forecast.round_temp == true;
-  var dateTime = [];
-  var tempHigh = [];
-  var tempLow = [];
-  var precip = [];
+  const forecast = this.forecasts ? this.forecasts.slice(0, forecastItems) : [];
+  const roundTemp = config.forecast.round_temp === true;
+  const dateTime = [];
+  const tempHigh = [];
+  const tempLow = [];
+  const precip = [];
 
-  for (var i = 0; i < forecast.length; i++) {
-    var d = forecast[i];
+  for (let i = 0; i < forecast.length; i++) {
+    const d = forecast[i];
     if (config.autoscroll) {
       const cutoff = (config.forecast.type === 'hourly' ? 1 : 24) * 60 * 60 * 1000;
       if (new Date() - new Date(d.datetime) > cutoff) {
