@@ -18025,8 +18025,6 @@ subscribeForecastEvents() {
     this.forecasts = event.forecast;
     this.requestUpdate();
     this.drawChart();
-    console.log("received forecasts " + new Date());
-    console.log(event);
   };
 
   this.forecastSubscriber = this._hass.connection.subscribeMessage(callback, {
@@ -18142,6 +18140,7 @@ getWindDirIcon(deg) {
         break;
       case "ENE":
       case "E":
+        i = 2;
         i = 2;
         break;
       case "ESE":
@@ -18319,9 +18318,6 @@ drawChart({ config, language, weather, forecastItems } = this) {
   }
   const data = this.computeForecastData();
 
-  console.log("drawChart " + new Date());
-  console.log(data);
-
   var style = getComputedStyle(document.body);
   var backgroundColor = style.getPropertyValue('--card-background-color');
   var textColor = style.getPropertyValue('--primary-text-color');
@@ -18354,7 +18350,7 @@ drawChart({ config, language, weather, forecastItems } = this) {
   Chart.defaults.elements.point.radius = 2;
   Chart.defaults.elements.point.hitRadius = 10;
 
-  var datasets = [
+  const datasets = [
     {
       label: this.ll('tempHi'),
       type: 'line',
@@ -18384,27 +18380,27 @@ drawChart({ config, language, weather, forecastItems } = this) {
         display: function (context) {
           return context.dataset.data[context.dataIndex] > 0 ? 'true' : false;
         },
-      formatter: function (value, context) {
-        const precipitationType = config.forecast.precipitation_type;
+        formatter: function (value, context) {
+          const precipitationType = config.forecast.precipitation_type;
 
-        const rainfall = context.dataset.data[context.dataIndex];
-        const probability = data.forecast[context.dataIndex].precipitation_probability;
+          const rainfall = context.dataset.data[context.dataIndex];
+          const probability = data.forecast[context.dataIndex].precipitation_probability;
 
-        let formattedValue;
-        if (precipitationType === 'rainfall') {
-          if (probability !== undefined && probability !== null && config.forecast.show_probability) {
-	    formattedValue = `${rainfall > 9 ? Math.round(rainfall) : rainfall.toFixed(1)} ${precipUnit}\n${Math.round(probability)}%`;
+          let formattedValue;
+          if (precipitationType === 'rainfall') {
+            if (probability !== undefined && probability !== null && config.forecast.show_probability) {
+              formattedValue = `${rainfall > 9 ? Math.round(rainfall) : rainfall.toFixed(1)} ${precipUnit}\n${Math.round(probability)}%`;
+            } else {
+              formattedValue = `${rainfall > 9 ? Math.round(rainfall) : rainfall.toFixed(1)} ${precipUnit}`;
+            }
           } else {
             formattedValue = `${rainfall > 9 ? Math.round(rainfall) : rainfall.toFixed(1)} ${precipUnit}`;
           }
-        } else {
-          formattedValue = `${rainfall > 9 ? Math.round(rainfall) : rainfall.toFixed(1)} ${precipUnit}`;
-        }
 
-        formattedValue = formattedValue.replace('\n', '\n\n');
+          formattedValue = formattedValue.replace('\n', '\n\n');
 
-        return formattedValue;
-      },
+          return formattedValue;
+        },
         textAlign: 'center',
         textBaseline: 'middle',
         align: 'top',
@@ -18575,10 +18571,10 @@ drawChart({ config, language, weather, forecastItems } = this) {
               });
             },
     label: function (context) {
-      var label = context.dataset.label;
-      var value = context.formattedValue;
-      var probability = data.forecast[context.dataIndex].precipitation_probability;
-      var unit = context.datasetIndex === 2 ? precipUnit : tempUnit;
+      const label = context.dataset.label;
+      const value = context.formattedValue;
+      const probability = data.forecast[context.dataIndex].precipitation_probability;
+      const unit = context.datasetIndex === 2 ? precipUnit : tempUnit;
 
       if (config.forecast.precipitation_type === 'rainfall' && context.datasetIndex === 2 && config.forecast.show_probability && probability !== undefined && probability !== null) {
         return label + ': ' + value + ' ' + precipUnit + ' / ' + Math.round(probability) + '%';
@@ -18984,7 +18980,7 @@ renderAttributes({ config, humidity, pressure, windSpeed, windDirection, sun, la
     }
   }
 
-  if (config.show_attributes == false)
+  if (config.show_attributes === false)
     return x``;
 
   const showHumidity = config.show_humidity !== false;
@@ -18992,9 +18988,9 @@ renderAttributes({ config, humidity, pressure, windSpeed, windDirection, sun, la
   const showWindDirection = config.show_wind_direction !== false;
   const showWindSpeed = config.show_wind_speed !== false;
   const showSun = config.show_sun !== false;
-  const showDewpoint = config.show_dew_point == true;
-  const showWindgustspeed = config.show_wind_gust_speed == true;
-  const showVisibility = config.show_visibility == true;
+  const showDewpoint = config.show_dew_point === true;
+  const showWindgustspeed = config.show_wind_gust_speed === true;
+  const showVisibility = config.show_visibility === true;
 
 return x`
     <div class="attributes">
@@ -19048,7 +19044,7 @@ return x`
 }
 
 renderSun({ sun, language, config } = this) {
-  if (sun == undefined) {
+  if (sun === undefined) {
     return x``;
   }
 

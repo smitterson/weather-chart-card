@@ -28,7 +28,7 @@
     "rollup-plugin-serve": "^2.0.3"
   },
   "scripts": {
-    "start": "rollup -c rollup.config.dev.js --watch",
+    "start": "rollup -c --watch",
     "build": "npm run lint && npm run rollup",
     "lint": "eslint 'src/**/*.js'",
     "rollup": "rollup -c"

@@ -6,7 +6,7 @@ const dev = process.env.ROLLUP_WATCH;
 
 const serveopts = {
   contentBase: ['./dist'],
-  host: '0.0.0.0',
+  host: 'localhost',
   port: 5000,
   allowCrossOrigin: true,
   headers: {
