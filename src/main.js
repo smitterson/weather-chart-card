@@ -184,7 +184,7 @@ subscribeForecastEvents() {
     this.forecasts = event.forecast;
     this.requestUpdate();
     this.drawChart();
-    console.log("received forecasts");
+    console.log("received forecasts " + new Date());
     console.log(event);
   };
 
@@ -478,7 +478,7 @@ drawChart({ config, language, weather, forecastItems } = this) {
   }
   const data = this.computeForecastData();
 
-  console.log("drawChart");
+  console.log("drawChart " + new Date());
   console.log(data);
 
   var style = getComputedStyle(document.body);
