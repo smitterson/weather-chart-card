@@ -1,4 +1,6 @@
-const locale = {
+type Translations = Record<string, Record<string, string | string[] | Record<string, string>> | undefined>;
+
+const locale: Translations = {
   cs: {
     'tempHi': 'Teplota',
     'tempLo': 'Teplota v noci',
