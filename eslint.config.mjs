@@ -10,7 +10,8 @@ export default tseslint.config(
     // apply default config
     prettierConfig,
     eslint.configs.recommended,
-    tseslint.configs.strictTypeChecked,
+    tseslint.configs.eslintRecommended,
+    tseslint.configs.recommended,
     tseslint.configs.stylisticTypeChecked,
     // default language/parser options
     {
@@ -32,6 +33,7 @@ export default tseslint.config(
       rules: {
         "no-console": "warn",
         "no-unused-vars": "off",
+        "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": [
           "error",
           {

@@ -46,11 +46,7 @@ const weatherIconsNight = {
     'partlycloudy': 'partlycloudy-night',
 };
 
-export enum WeatherEntityFeature {
-    FORECAST_DAILY = 1,
-    FORECAST_HOURLY = 2,
-    FORECAST_TWICE_DAILY = 4,
-};
+
 
 export {
     cardinalDirectionsIcon,

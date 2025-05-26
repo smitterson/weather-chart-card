@@ -4,15 +4,21 @@ import {
     weatherIcons,
     weatherIconsDay,
     weatherIconsNight,
-    WeatherEntityFeature
 } from './const';
-import {LitElement, html} from 'lit';
+import {LitElement, html, PropertyValues} from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import './weather-chart-card-editor.js';
 import {Chart, registerables} from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {HomeAssistant} from "custom-card-helpers";
-import {ForecastEvent, ForecastItem, SubscriptionUnsubscribe, WeatherChartCardConfig} from "./types";
+import {
+    ForecastEvent,
+    ForecastItem,
+    SubscriptionUnsubscribe,
+    WeatherChartCardConfig,
+    WeatherEntity,
+    WeatherEntityFeature
+} from "./types";
 import {HassEntity} from "home-assistant-js-websocket";
 Chart.register(...registerables, ChartDataLabels);
 
@@ -26,23 +32,23 @@ export class WeatherChartCard extends LitElement {
     @state() private config!: WeatherChartCardConfig;
     @state() private language!: string;
     @state() private sun: HassEntity | null = null;
-    @state() private weather: HassEntity | null = null;
+    @state() private weather: WeatherEntity | null = null;
     @state() private forecasts: ForecastItem[] = [];
 
     @state() private forecastChart: Chart | null = null;
     @state() private forecastItems = 0;
-    @state() private unitSpeed = '';
-    @state() private unitPressure = '';
-    @state() private unitVisibility = '';
+    @state() private unitSpeed?: string | null = '';
+    @state() private unitPressure?: string | null = '';
+    @state() private unitVisibility?: string | null = '';
     @state() private temperature = '';
-    @state() private humidity = '';
-    @state() private pressure = '';
-    @state() private windSpeed = '';
-    @state() private uv_index = '';
+    @state() private humidity: string | number = '';
+    @state() private pressure: string | number = '';
+    @state() private windSpeed: string | number = '';
+    @state() private uv_index?: string | number = '';
     @state() private feels_like = '';
-    @state() private dew_point = '';
-    @state() private wind_gust_speed = '';
-    @state() private visibility = '';
+    @state() private dew_point?: string | number = '';
+    @state() private wind_gust_speed?: string | number = '';
+    @state() private visibility: string | number = '';
     @state() private description = '';
 
     @state() private windDirection = 0;
@@ -93,7 +99,7 @@ export class WeatherChartCard extends LitElement {
                 precipitation_type: 'rainfall',
                 show_probability: false,
                 labels_font_size: 11,
-                precip_bar_size: '100',
+                precip_bar_size: 100,
                 style: 'style1',
                 show_wind_forecast: true,
                 condition_icons: true,
@@ -130,14 +136,14 @@ export class WeatherChartCard extends LitElement {
 
     set hass(hass: HomeAssistant) {
         this._hass = hass;
-        this.language = this.config.locale || hass.selectedLanguage || hass.language;
+        this.language = this.config.locale ?? hass.selectedLanguage ?? hass.language;
         this.sun = 'sun.sun' in hass.states ? hass.states['sun.sun'] : null;
         this.weather = this.config.entity in hass.states
-            ? hass.states[this.config.entity]
+            ? hass.states[this.config.entity] as WeatherEntity
             : null;
-        this.unitSpeed = this.config.units.speed ? this.config.units.speed : this.weather && this.weather.attributes.wind_speed_unit;
-        this.unitPressure = this.config.units.pressure ? this.config.units.pressure : this.weather && this.weather.attributes.pressure_unit;
-        this.unitVisibility = this.config.units.visibility ? this.config.units.visibility : this.weather && this.weather.attributes.visibility_unit;
+        this.unitSpeed = this.config.units.speed ?? this.weather?.attributes.wind_speed_unit;
+        this.unitPressure = this.config.units.pressure ?? this.weather?.attributes.pressure_unit;
+        this.unitVisibility = this.config.units.visibility ?? this.weather?.attributes.visibility_unit;
 
         if (this.weather) {
             this.temperature = this.config.temp ? hass.states[this.config.temp].state : this.weather.attributes.temperature;
@@ -188,7 +194,8 @@ export class WeatherChartCard extends LitElement {
     }
 
     supportsFeature(feature: WeatherEntityFeature) {
-        return (this.weather.attributes.supported_features & feature) !== 0;
+        if (!this.weather?.attributes.supported_features) return false;
+        return (this.weather?.attributes.supported_features & feature) !== 0;
     }
 
     constructor() {
@@ -215,7 +222,7 @@ export class WeatherChartCard extends LitElement {
         super.disconnectedCallback();
         this.detachResizeObserver();
         if (this.forecastSubscriber) {
-            void this.forecastSubscriber.then((unsub) => unsub());
+            this.forecastSubscriber.then((unsub) => unsub());
         }
     }
 
@@ -245,7 +252,8 @@ export class WeatherChartCard extends LitElement {
             return;
         }
 
-        this.forecastItems = numberOfForecasts > 0 ? numberOfForecasts : Math.round(card.offsetWidth / (fontSize * 6));
+        const htmlElement = card as HTMLElement;
+        this.forecastItems = numberOfForecasts > 0 ? numberOfForecasts : Math.round(htmlElement.offsetWidth / (fontSize * 6));
         this.drawChart();
     }
 
@@ -263,11 +271,11 @@ export class WeatherChartCard extends LitElement {
         return 4;
     }
 
-    getUnit(unit) {
+    getUnit(unit: string) {
         return this._hass.config.unit_system[unit] || '';
     }
 
-    getWeatherIcon(condition, sun) {
+    getWeatherIcon(condition: string, sun: string) {
         if (this.config.animated_icons) {
             const iconName = sun === 'below_horizon' ? weatherIconsNight[condition] : weatherIconsDay[condition];
             return `${this.baseIconPath}${iconName}.svg`;
@@ -335,14 +343,14 @@ export class WeatherChartCard extends LitElement {
         }
     }
 
-    calculateBeaufortScale(windSpeed) {
+    calculateBeaufortScale(windSpeed: number) {
         const unitConversion = {
             'km/h': 1,
             'm/s': 3.6,
             'mph': 1.60934,
         };
 
-        if (!this.weather || !this.weather.attributes.wind_speed_unit) {
+        if (!this.weather?.attributes.wind_speed_unit) {
             throw new Error('wind_speed_unit not available in weather attributes.');
         }
 
@@ -370,7 +378,7 @@ export class WeatherChartCard extends LitElement {
         else return 12;
     }
 
-    async firstUpdated(changedProperties) {
+    async firstUpdated(changedProperties: PropertyValues) {
         super.firstUpdated(changedProperties);
         this.measureCard();
         await new Promise(resolve => setTimeout(resolve, 0));
@@ -382,7 +390,7 @@ export class WeatherChartCard extends LitElement {
     }
 
 
-    async updated(changedProperties) {
+    async updated(changedProperties: PropertyValues) {
         await this.updateComplete;
 
         if (changedProperties.has('config')) {
@@ -393,14 +401,14 @@ export class WeatherChartCard extends LitElement {
             const autoscrollChanged = oldConfig && this.config.autoscroll !== oldConfig.autoscroll;
 
             if (entityChanged || forecastTypeChanged) {
-                if (this.forecastSubscriber && typeof this.forecastSubscriber === 'function') {
-                    this.forecastSubscriber();
+                if (this.forecastSubscriber) {
+                    this.forecastSubscriber.then((unsub) => unsub());
                 }
 
                 this.subscribeForecastEvents();
             }
 
-            if (this.forecasts && this.forecasts.length) {
+            if (this.forecasts?.length) {
                 this.drawChart();
             }
 
@@ -448,12 +456,12 @@ export class WeatherChartCard extends LitElement {
         }
     }
 
-    drawChart({ config, language, weather, forecastItems } = this) {
+    drawChart({ config, language } = this) {
         if (!this.forecasts.length) {
-            return [];
+            return;
         }
 
-        const chartCanvas = this.renderRoot && this.renderRoot.querySelector('#forecastChart');
+        const chartCanvas = this.renderRoot?.querySelector('#forecastChart');
         if (!chartCanvas) {
             console.error('Canvas element not found:', this.renderRoot);
             return;
@@ -464,10 +472,11 @@ export class WeatherChartCard extends LitElement {
         }
         const tempUnit = this._hass.config.unit_system.temperature;
         const lengthUnit = this._hass.config.unit_system.length;
+        let precipUnit;
         if (config.forecast.precipitation_type === 'probability') {
-            var precipUnit = '%';
+            precipUnit = '%';
         } else {
-            var precipUnit = lengthUnit === 'km' ? this.ll('units').mm : this.ll('units').in;
+            precipUnit = lengthUnit === 'km' ? this.ll('units').mm : this.ll('units').in;
         }
         const data = this.computeForecastData();
 
@@ -481,7 +490,7 @@ export class WeatherChartCard extends LitElement {
             return;
         }
 
-        const ctx = canvas.getContext('2d');
+        const canvasElement = canvas as HTMLCanvasElement;
 
         let precipMax;
 
@@ -603,7 +612,7 @@ export class WeatherChartCard extends LitElement {
             };
         }
 
-        this.forecastChart = new Chart(ctx, {
+        this.forecastChart = new Chart(canvasElement, {
             type: 'bar',
             data: {
                 labels: data.dateTime,
@@ -631,7 +640,7 @@ export class WeatherChartCard extends LitElement {
                             maxRotation: 0,
                             color: config.forecast.chart_datetime_color || textColor,
                             padding: config.forecast.precipitation_type === 'rainfall' && config.forecast.show_probability && config.forecast.type !== 'hourly' ? 4 : 10,
-                            callback: function (value, index, values) {
+                            callback: function (value) {
                                 const datetime = this.getLabelForValue(value);
                                 const dateObj = new Date(datetime);
 
@@ -806,7 +815,7 @@ export class WeatherChartCard extends LitElement {
         if (!config || !_hass) {
             return html``;
         }
-        if (!weather || !weather.attributes) {
+        if (!weather?.attributes) {
             return html`
                 <style>
                     .card {
@@ -1013,7 +1022,7 @@ export class WeatherChartCard extends LitElement {
             const currentDayOfWeek = currentDate.toLocaleString(this.language, { weekday: 'long' }).toUpperCase();
             const currentDateFormatted = currentDate.toLocaleDateString(this.language, { month: 'long', day: 'numeric' });
 
-            const mainDiv = this.shadowRoot.querySelector('.main');
+            const mainDiv = this.shadowRoot?.querySelector('.main');
             if (mainDiv) {
                 const clockElement = mainDiv.querySelector('#digital-clock');
                 if (clockElement) {
@@ -1080,23 +1089,23 @@ export class WeatherChartCard extends LitElement {
         let dWindSpeed = windSpeed;
         let dPressure = pressure;
 
-        if (this.unitSpeed !== this.weather.attributes.wind_speed_unit) {
+        if (this.unitSpeed !== this.weather?.attributes.wind_speed_unit) {
             if (this.unitSpeed === 'm/s') {
-                if (this.weather.attributes.wind_speed_unit === 'km/h') {
+                if (this.weather?.attributes.wind_speed_unit === 'km/h') {
                     dWindSpeed = Math.round(windSpeed * 1000 / 3600);
-                } else if (this.weather.attributes.wind_speed_unit === 'mph') {
+                } else if (this.weather?.attributes.wind_speed_unit === 'mph') {
                     dWindSpeed = Math.round(windSpeed * 0.44704);
                 }
             } else if (this.unitSpeed === 'km/h') {
-                if (this.weather.attributes.wind_speed_unit === 'm/s') {
+                if (this.weather?.attributes.wind_speed_unit === 'm/s') {
                     dWindSpeed = Math.round(windSpeed * 3.6);
-                } else if (this.weather.attributes.wind_speed_unit === 'mph') {
+                } else if (this.weather?.attributes.wind_speed_unit === 'mph') {
                     dWindSpeed = Math.round(windSpeed * 1.60934);
                 }
             } else if (this.unitSpeed === 'mph') {
-                if (this.weather.attributes.wind_speed_unit === 'm/s') {
+                if (this.weather?.attributes.wind_speed_unit === 'm/s') {
                     dWindSpeed = Math.round(windSpeed / 0.44704);
-                } else if (this.weather.attributes.wind_speed_unit === 'km/h') {
+                } else if (this.weather?.attributes.wind_speed_unit === 'km/h') {
                     dWindSpeed = Math.round(windSpeed / 1.60934);
                 }
             } else if (this.unitSpeed === 'Bft') {
@@ -1106,23 +1115,23 @@ export class WeatherChartCard extends LitElement {
             dWindSpeed = Math.round(dWindSpeed);
         }
 
-        if (this.unitPressure !== this.weather.attributes.pressure_unit) {
+        if (this.unitPressure !== this.weather?.attributes.pressure_unit) {
             if (this.unitPressure === 'mmHg') {
-                if (this.weather.attributes.pressure_unit === 'hPa') {
+                if (this.weather?.attributes.pressure_unit === 'hPa') {
                     dPressure = Math.round(pressure * 0.75006);
-                } else if (this.weather.attributes.pressure_unit === 'inHg') {
+                } else if (this.weather?.attributes.pressure_unit === 'inHg') {
                     dPressure = Math.round(pressure * 25.4);
                 }
             } else if (this.unitPressure === 'hPa') {
-                if (this.weather.attributes.pressure_unit === 'mmHg') {
+                if (this.weather?.attributes.pressure_unit === 'mmHg') {
                     dPressure = Math.round(pressure / 0.75006);
-                } else if (this.weather.attributes.pressure_unit === 'inHg') {
+                } else if (this.weather?.attributes.pressure_unit === 'inHg') {
                     dPressure = Math.round(pressure * 33.8639);
                 }
             } else if (this.unitPressure === 'inHg') {
-                if (this.weather.attributes.pressure_unit === 'mmHg') {
+                if (this.weather?.attributes.pressure_unit === 'mmHg') {
                     dPressure = pressure / 25.4;
-                } else if (this.weather.attributes.pressure_unit === 'hPa') {
+                } else if (this.weather?.attributes.pressure_unit === 'hPa') {
                     dPressure = pressure / 33.8639;
                 }
                 dPressure = dPressure.toFixed(2);
@@ -1196,7 +1205,7 @@ export class WeatherChartCard extends LitElement {
         `;
     }
 
-    renderSun({ sun, language, config } = this) {
+    renderSun({ sun, language } = this) {
         if (sun === undefined) {
             return html``;
         }
@@ -1275,7 +1284,7 @@ export class WeatherChartCard extends LitElement {
         `;
     }
 
-    renderWind({ config, weather, windSpeed, windDirection, forecastItems } = this) {
+    renderWind({ config, forecastItems } = this) {
         const showWindForecast = config.forecast.show_wind_forecast;
 
         if (!showWindForecast) {
@@ -1290,23 +1299,23 @@ export class WeatherChartCard extends LitElement {
                     ${forecast.map((item) => {
                         let dWindSpeed = item.wind_speed;
 
-                        if (this.unitSpeed !== this.weather.attributes.wind_speed_unit) {
+                        if (this.unitSpeed !== this.weather?.attributes.wind_speed_unit) {
                             if (this.unitSpeed === 'm/s') {
-                                if (this.weather.attributes.wind_speed_unit === 'km/h') {
+                                if (this.weather?.attributes.wind_speed_unit === 'km/h') {
                                     dWindSpeed = Math.round(item.wind_speed * 1000 / 3600);
-                                } else if (this.weather.attributes.wind_speed_unit === 'mph') {
+                                } else if (this.weather?.attributes.wind_speed_unit === 'mph') {
                                     dWindSpeed = Math.round(item.wind_speed * 0.44704);
                                 }
                             } else if (this.unitSpeed === 'km/h') {
-                                if (this.weather.attributes.wind_speed_unit === 'm/s') {
+                                if (this.weather?.attributes.wind_speed_unit === 'm/s') {
                                     dWindSpeed = Math.round(item.wind_speed * 3.6);
-                                } else if (this.weather.attributes.wind_speed_unit === 'mph') {
+                                } else if (this.weather?.attributes.wind_speed_unit === 'mph') {
                                     dWindSpeed = Math.round(item.wind_speed * 1.60934);
                                 }
                             } else if (this.unitSpeed === 'mph') {
-                                if (this.weather.attributes.wind_speed_unit === 'm/s') {
+                                if (this.weather?.attributes.wind_speed_unit === 'm/s') {
                                     dWindSpeed = Math.round(item.wind_speed / 0.44704);
-                                } else if (this.weather.attributes.wind_speed_unit === 'km/h') {
+                                } else if (this.weather?.attributes.wind_speed_unit === 'km/h') {
                                     dWindSpeed = Math.round(item.wind_speed / 1.60934);
                                 }
                             } else if (this.unitSpeed === 'Bft') {
@@ -1330,7 +1339,7 @@ export class WeatherChartCard extends LitElement {
     }
 
     renderLastUpdated() {
-        const lastUpdatedString = this.weather.last_changed;
+        const lastUpdatedString = this.weather?.last_changed;
         const lastUpdatedTimestamp = new Date(lastUpdatedString).getTime();
         const currentTimestamp = Date.now();
         const timeDifference = currentTimestamp - lastUpdatedTimestamp;
@@ -1386,7 +1395,13 @@ export class WeatherChartCard extends LitElement {
 
 customElements.define('weather-chart-card', WeatherChartCard);
 
-window.customCards = window.customCards || [];
+declare global {
+    interface Window {
+        customCards?: unknown[];
+    }
+}
+
+window.customCards = window.customCards ?? [];
 window.customCards.push({
     type: "weather-chart-card",
     name: "Weather Chart Card",

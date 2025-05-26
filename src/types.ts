@@ -1,9 +1,17 @@
+import {HassEntity} from "home-assistant-js-websocket";
+
+export enum WeatherEntityFeature {
+    FORECAST_DAILY = 1,
+    FORECAST_HOURLY = 2,
+    FORECAST_TWICE_DAILY = 4,
+}
+
 export interface ForecastConfig {
-    precipitation_type: 'rainfall',
+    precipitation_type: string,
     show_probability: boolean;
     chart_height: number,
     labels_font_size: number,
-    precip_bar_size: '100',
+    precip_bar_size: number,
     style: 'style1' | 'style2',
     show_wind_forecast: boolean;
     condition_icons: boolean;
@@ -25,6 +33,7 @@ export interface UnitsConfig {
 }
 
 export interface WeatherChartCardConfig {
+    title?: string;
     entity: string;
     forecast: ForecastConfig;
     units: UnitsConfig;
@@ -68,6 +77,7 @@ export interface WeatherChartCardConfig {
     wind_gust_speed?: string;
     visibility?: string;
     winddir?: string;
+    icons?: string;
 }
 
 export interface ForecastItem {
@@ -86,3 +96,25 @@ export interface ForecastEvent {
 }
 
 export type SubscriptionUnsubscribe = () => Promise<void>;
+
+export interface WeatherEntity extends HassEntity {
+  attributes: {
+    temperature: string;
+    temperature_unit: string;
+    humidity: string;
+    pressure: string;
+    pressure_unit: string;
+    wind_speed: string;
+    wind_speed_unit: string;
+    wind_bearing: string;
+    visibility: string;
+    visibility_unit: string;
+    precipitation_unit?: string;
+    forecast?: ForecastItem[];
+    uv_index?: string;
+    dew_point?: string;
+    wind_gust_speed?: string;
+    supported_features?: WeatherEntityFeature;
+    [key: string]: any;
+  };
+}
