@@ -85,9 +85,9 @@ export interface ForecastItem {
     temperature: number;
     templow?: number;
     precipitation_probability?: number;
-    precipitation: number;
+    precipitation?: number;
     condition?: string;
-    wind_bearing?: number;
+    wind_bearing?: number | string;
     wind_speed?: number;
 }
 
@@ -99,21 +99,21 @@ export type SubscriptionUnsubscribe = () => Promise<void>;
 
 export interface WeatherEntity extends HassEntity {
   attributes: {
-    temperature: string;
+    temperature: number;
     temperature_unit: string;
-    humidity: string;
-    pressure: string;
+    humidity: number;
+    pressure: number;
     pressure_unit: string;
-    wind_speed: string;
+    wind_speed: number;
     wind_speed_unit: string;
-    wind_bearing: string;
-    visibility: string;
+    wind_bearing: number | string;
+    visibility: number;
     visibility_unit: string;
     precipitation_unit?: string;
     forecast?: ForecastItem[];
-    uv_index?: string;
-    dew_point?: string;
-    wind_gust_speed?: string;
+    uv_index?: number;
+    dew_point?: number;
+    wind_gust_speed?: number;
     supported_features?: WeatherEntityFeature;
     [key: string]: any;
   };

@@ -37,21 +37,20 @@ export class WeatherChartCard extends LitElement {
 
     @state() private forecastChart: Chart | null = null;
     @state() private forecastItems = 0;
-    @state() private unitSpeed?: string | null = '';
-    @state() private unitPressure?: string | null = '';
-    @state() private unitVisibility?: string | null = '';
-    @state() private temperature = '';
-    @state() private humidity: string | number = '';
-    @state() private pressure: string | number = '';
-    @state() private windSpeed: string | number = '';
-    @state() private uv_index?: string | number = '';
-    @state() private feels_like = '';
-    @state() private dew_point?: string | number = '';
-    @state() private wind_gust_speed?: string | number = '';
-    @state() private visibility: string | number = '';
+    @state() private unitSpeed?: string;
+    @state() private unitPressure?: string;
+    @state() private unitVisibility?: string;
+    @state() private temperature = 0;
+    @state() private humidity?: number;
+    @state() private pressure?: number;
+    @state() private windSpeed?: number;
+    @state() private uv_index?: number
+    @state() private feels_like?: number;
+    @state() private dew_point?: number;
+    @state() private wind_gust_speed?: number;
+    @state() private visibility?: number;
     @state() private description = '';
-
-    @state() private windDirection = 0;
+    @state() private windDirection?: string | number;
 
     private resizeObserver: ResizeObserver | null;
     private resizeInitialized: boolean;
@@ -146,14 +145,14 @@ export class WeatherChartCard extends LitElement {
         this.unitVisibility = this.config.units.visibility ?? this.weather?.attributes.visibility_unit;
 
         if (this.weather) {
-            this.temperature = this.config.temp ? hass.states[this.config.temp].state : this.weather.attributes.temperature;
-            this.humidity = this.config.humid ? hass.states[this.config.humid].state : this.weather.attributes.humidity;
-            this.pressure = this.config.press ? hass.states[this.config.press].state : this.weather.attributes.pressure;
-            this.uv_index = this.config.uv ? hass.states[this.config.uv].state : this.weather.attributes.uv_index;
-            this.windSpeed = this.config.windspeed ? hass.states[this.config.windspeed].state : this.weather.attributes.wind_speed;
-            this.dew_point = this.config.dew_point ? hass.states[this.config.dew_point].state : this.weather.attributes.dew_point;
-            this.wind_gust_speed = this.config.wind_gust_speed ? hass.states[this.config.wind_gust_speed].state : this.weather.attributes.wind_gust_speed;
-            this.visibility = this.config.visibility ? hass.states[this.config.visibility].state : this.weather.attributes.visibility;
+            this.temperature = this.config.temp ? parseFloat(hass.states[this.config.temp].state) : this.weather.attributes.temperature;
+            this.humidity = this.config.humid ? parseFloat(hass.states[this.config.humid].state) : this.weather.attributes.humidity;
+            this.pressure = this.config.press ? parseFloat(hass.states[this.config.press].state) : this.weather.attributes.pressure;
+            this.uv_index = this.config.uv ? parseFloat(hass.states[this.config.uv].state) : this.weather.attributes.uv_index;
+            this.windSpeed = this.config.windspeed ? parseFloat(hass.states[this.config.windspeed].state) : this.weather.attributes.wind_speed;
+            this.dew_point = this.config.dew_point ? parseFloat(hass.states[this.config.dew_point].state) : this.weather.attributes.dew_point;
+            this.wind_gust_speed = this.config.wind_gust_speed ? parseFloat(hass.states[this.config.wind_gust_speed].state) : this.weather.attributes.wind_gust_speed;
+            this.visibility = this.config.visibility ? parseFloat(hass.states[this.config.visibility].state) : this.weather.attributes.visibility;
 
             if (this.config.winddir && hass.states[this.config.winddir] && hass.states[this.config.winddir].state !== undefined) {
                 this.windDirection = parseFloat(hass.states[this.config.winddir].state);
@@ -302,7 +301,6 @@ export class WeatherChartCard extends LitElement {
                 case "ENE":
                 case "E":
                     i = 2;
-                    i = 2;
                     break;
                 case "ESE":
                 case "SE":
@@ -335,11 +333,11 @@ export class WeatherChartCard extends LitElement {
         }
     }
 
-    getWindDir(deg: string | number) {
-        if (typeof deg === 'number') {
-            return this.ll('cardinalDirections')[parseInt((deg + 11.25) / 22.5)];
+    getWindDir(dir: string | number) {
+        if (typeof dir === 'number') {
+            return this.ll('cardinalDirections')[parseInt((dir + 11.25) / 22.5)];
         } else {
-            return deg;
+            return dir;
         }
     }
 
@@ -1089,7 +1087,7 @@ export class WeatherChartCard extends LitElement {
         let dWindSpeed = windSpeed;
         let dPressure = pressure;
 
-        if (this.unitSpeed !== this.weather?.attributes.wind_speed_unit) {
+        if (this.unitSpeed !== this.weather?.attributes.wind_speed_unit && windSpeed) {
             if (this.unitSpeed === 'm/s') {
                 if (this.weather?.attributes.wind_speed_unit === 'km/h') {
                     dWindSpeed = Math.round(windSpeed * 1000 / 3600);
@@ -1111,11 +1109,11 @@ export class WeatherChartCard extends LitElement {
             } else if (this.unitSpeed === 'Bft') {
                 dWindSpeed = this.calculateBeaufortScale(windSpeed);
             }
-        } else {
+        } else if (dWindSpeed) {
             dWindSpeed = Math.round(dWindSpeed);
         }
 
-        if (this.unitPressure !== this.weather?.attributes.pressure_unit) {
+        if (this.unitPressure !== this.weather?.attributes.pressure_unit && pressure) {
             if (this.unitPressure === 'mmHg') {
                 if (this.weather?.attributes.pressure_unit === 'hPa') {
                     dPressure = Math.round(pressure * 0.75006);
@@ -1134,9 +1132,9 @@ export class WeatherChartCard extends LitElement {
                 } else if (this.weather?.attributes.pressure_unit === 'hPa') {
                     dPressure = pressure / 33.8639;
                 }
-                dPressure = dPressure.toFixed(2);
+                dPressure = pressure.toFixed(2);
             }
-        } else {
+        } else if (dPressure) {
             if (this.unitPressure === 'hPa' || this.unitPressure === 'mmHg') {
                 dPressure = Math.round(dPressure);
             }
@@ -1211,7 +1209,7 @@ export class WeatherChartCard extends LitElement {
         }
 
         const use12HourFormat = this.config.use_12hour_format;
-        const timeOptions = {
+        const timeOptions: Intl.DateTimeFormatOptions = {
             hour12: use12HourFormat,
             hour: 'numeric',
             minute: 'numeric'
@@ -1219,9 +1217,9 @@ export class WeatherChartCard extends LitElement {
 
         return html`
             <ha-icon icon="mdi:weather-sunset-up"></ha-icon>
-            ${new Date(sun.attributes.next_rising).toLocaleTimeString(language, timeOptions)}<br>
+            ${new Date(sun?.attributes.next_rising).toLocaleTimeString(language, timeOptions)}<br>
             <ha-icon icon="mdi:weather-sunset-down"></ha-icon>
-            ${new Date(sun.attributes.next_setting).toLocaleTimeString(language, timeOptions)}
+            ${new Date(sun?.attributes.next_setting).toLocaleTimeString(language, timeOptions)}
         `;
     }
 
@@ -1388,7 +1386,7 @@ export class WeatherChartCard extends LitElement {
         return event;
     }
 
-    showMoreInfo(entity) {
+    showMoreInfo(entity: string) {
         this._fire('hass-more-info', { entityId: entity });
     }
 }

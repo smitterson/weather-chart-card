@@ -4,7 +4,7 @@ const cardinalDirectionsIcon = [
     'arrow-right', 'arrow-bottom-right', 'arrow-down'
 ];
 
-const weatherIcons = {
+const weatherIcons: Record<string, string> = {
     'clear-night': 'hass:weather-night',
     'cloudy': 'hass:weather-cloudy',
     'exceptional': 'mdi:alert-circle-outline',
@@ -22,7 +22,7 @@ const weatherIcons = {
     'windy-variant': 'hass:weather-windy-variant'
 };
 
-const weatherIconsDay = {
+const weatherIconsDay: Record<string, string> = {
     'clear-night': 'clear-night',
     'cloudy': 'cloudy',
     'exceptional': 'exceptional',
@@ -40,7 +40,7 @@ const weatherIconsDay = {
     'windy-variant': 'wind',
 };
 
-const weatherIconsNight = {
+const weatherIconsNight: Record<string, string> = {
     ...weatherIconsDay,
     'sunny': 'clear-night',
     'partlycloudy': 'partlycloudy-night',
