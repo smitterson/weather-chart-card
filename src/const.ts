@@ -46,8 +46,6 @@ const weatherIconsNight: Record<string, string> = {
     'partlycloudy': 'partlycloudy-night',
 };
 
-
-
 export {
     cardinalDirectionsIcon,
     weatherIcons,

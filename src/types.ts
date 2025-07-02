@@ -23,6 +23,8 @@ export interface ForecastConfig {
     temperature2_color: string,
     precipitation_color: string,
     use_12hour_format: boolean,
+    chart_text_color: string;
+    chart_datetime_color?: string;
 }
 
 export interface UnitsConfig {
@@ -32,7 +34,7 @@ export interface UnitsConfig {
     temperature?: string,
 }
 
-export interface WeatherChartCardConfig {
+export interface WeatherChartCardConfig extends Record<string, any> {
     title?: string;
     entity: string;
     forecast: ForecastConfig;

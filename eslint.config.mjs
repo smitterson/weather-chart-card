@@ -31,7 +31,7 @@ export default tseslint.config(
     // individual rule overrides
     {
       rules: {
-        "no-console": "warn",
+        "no-console": "off",
         "no-unused-vars": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": [
