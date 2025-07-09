@@ -20,6 +20,10 @@ import {HassEntity} from "home-assistant-js-websocket";
 
 Chart.register(...registerables, ChartDataLabels);
 
+const PKG_VERSION = 'PKG_VERSION_VALUE';
+
+console.info(`🌦 Weather-Chart-Card ${PKG_VERSION}`);
+
 @customElement('weather-chart-card')
 export class WeatherChartCard extends LitElement {
     @property({ attribute: false }) public _hass!: HomeAssistant;
@@ -27,8 +31,8 @@ export class WeatherChartCard extends LitElement {
     private baseIconPath = '';
     private forecastSubscriber?: Promise<SubscriptionUnsubscribe>;
 
-    @state() private config!: WeatherChartCardConfig;
-    @state() private language!: string;
+    @state() private config?: WeatherChartCardConfig;
+    @state() private language?: string;
     @state() private sun: HassEntity | null = null;
     @state() private weather: WeatherEntity | null = null;
     @state() private forecasts: ForecastItem[] = [];
@@ -56,7 +60,8 @@ export class WeatherChartCard extends LitElement {
 
     private units = this.ll("units") as Record<string, string>;
 
-    static getConfigElement() {
+    public static async getConfigElement() {
+        await import('./weather-chart-card-editor');
         return document.createElement("weather-chart-card-editor");
     }
 
@@ -117,9 +122,30 @@ export class WeatherChartCard extends LitElement {
         };
     }
 
-    setConfig(config: WeatherChartCardConfig) {
+    public setConfig(config?: WeatherChartCardConfig) {
+        if (!config) {
+            throw new Error('Invalid configuration.');
+        }
+        if (!config.entity) {
+            throw new Error('You need to define entities.');
+        }
+
         const cardConfig : WeatherChartCardConfig = {
             ...config,
+            // TODO: sort out why these aren't included in the config?
+            current_temp_size: 28,
+            time_size: 26,
+            day_date_size: 15,
+            show_description: false,
+        };
+
+        cardConfig.forecast = {
+            ...cardConfig.forecast,
+            // TODO: sort out why these aren't included in the config?
+            chart_height: 180,
+            temperature1_color: 'rgba(255, 152, 0, 1.0)',
+            temperature2_color: 'rgba(68, 115, 158, 1.0)',
+            precipitation_color: 'rgba(132, 209, 253, 1.0)',
         };
 
         this.baseIconPath = cardConfig.icon_style === 'style2' ?
@@ -127,6 +153,7 @@ export class WeatherChartCard extends LitElement {
             'https://cdn.jsdelivr.net/gh/mlamberts78/weather-chart-card/dist/icons/' ;
 
         this.config = cardConfig;
+
         if (!config.entity) {
             throw new Error('Please, define entity in the card config');
         }
@@ -134,33 +161,35 @@ export class WeatherChartCard extends LitElement {
 
     set hass(hass: HomeAssistant) {
         this._hass = hass;
-        this.language = this.config.locale ?? hass.selectedLanguage ?? hass.language;
+        this.language = this.config?.locale ?? hass.selectedLanguage ?? hass.language;
         this.sun = 'sun.sun' in hass.states ? hass.states['sun.sun'] : null;
-        this.weather = this.config.entity in hass.states
-            ? hass.states[this.config.entity] as WeatherEntity
-            : null;
-        this.unitSpeed = this.config.units.speed ?? this.weather?.attributes.wind_speed_unit;
-        this.unitPressure = this.config.units.pressure ?? this.weather?.attributes.pressure_unit;
-        this.unitVisibility = this.config.units.visibility ?? this.weather?.attributes.visibility_unit;
+        if (this.config?.entity) {
+            this.weather = this.config.entity in hass.states
+                ? hass.states[this.config.entity] as WeatherEntity
+                : null;
+        }
+        this.unitSpeed = this.config?.units.speed ?? this.weather?.attributes.wind_speed_unit;
+        this.unitPressure = this.config?.units.pressure ?? this.weather?.attributes.pressure_unit;
+        this.unitVisibility = this.config?.units.visibility ?? this.weather?.attributes.visibility_unit;
 
         if (this.weather) {
-            this.temperature = this.config.temp ? parseFloat(hass.states[this.config.temp].state) : this.weather.attributes.temperature;
-            this.humidity = this.config.humid ? parseFloat(hass.states[this.config.humid].state) : this.weather.attributes.humidity;
-            this.pressure = this.config.press ? parseFloat(hass.states[this.config.press].state) : this.weather.attributes.pressure;
-            this.uv_index = this.config.uv ? parseFloat(hass.states[this.config.uv].state) : this.weather.attributes.uv_index;
-            this.windSpeed = this.config.windspeed ? parseFloat(hass.states[this.config.windspeed].state) : this.weather.attributes.wind_speed;
-            this.dew_point = this.config.dew_point ? parseFloat(hass.states[this.config.dew_point].state) : this.weather.attributes.dew_point;
-            this.wind_gust_speed = this.config.wind_gust_speed ? parseFloat(hass.states[this.config.wind_gust_speed].state) : this.weather.attributes.wind_gust_speed;
-            this.visibility = this.config.visibility ? parseFloat(hass.states[this.config.visibility].state) : this.weather.attributes.visibility;
+            this.temperature = this.config?.temp ? parseFloat(hass.states[this.config.temp].state) : this.weather.attributes.temperature;
+            this.humidity = this.config?.humid ? parseFloat(hass.states[this.config.humid].state) : this.weather.attributes.humidity;
+            this.pressure = this.config?.press ? parseFloat(hass.states[this.config.press].state) : this.weather.attributes.pressure;
+            this.uv_index = this.config?.uv ? parseFloat(hass.states[this.config.uv].state) : this.weather.attributes.uv_index;
+            this.windSpeed = this.config?.windspeed ? parseFloat(hass.states[this.config.windspeed].state) : this.weather.attributes.wind_speed;
+            this.dew_point = this.config?.dew_point ? parseFloat(hass.states[this.config.dew_point].state) : this.weather.attributes.dew_point;
+            this.wind_gust_speed = this.config?.wind_gust_speed ? parseFloat(hass.states[this.config.wind_gust_speed].state) : this.weather.attributes.wind_gust_speed;
+            this.visibility = this.config?.visibility ? parseFloat(hass.states[this.config.visibility].state) : this.weather.attributes.visibility;
 
-            if (this.config.winddir && hass.states[this.config.winddir] && hass.states[this.config.winddir].state !== undefined) {
+            if (this.config?.winddir && hass.states[this.config.winddir] && hass.states[this.config.winddir].state !== undefined) {
                 this.windDirection = parseFloat(hass.states[this.config.winddir].state);
             } else {
                 this.windDirection = this.weather.attributes.wind_bearing;
             }
 
-            this.feels_like = this.config.feels_like && hass.states[this.config.feels_like] ? hass.states[this.config.feels_like].state : this.weather.attributes.apparent_temperature;
-            this.description = this.config.description && hass.states[this.config.description] ? hass.states[this.config.description].state : this.weather.attributes.description;
+            this.feels_like = this.config?.feels_like && hass.states[this.config.feels_like] ? hass.states[this.config.feels_like].state : this.weather.attributes.apparent_temperature;
+            this.description = this.config?.description && hass.states[this.config.description] ? hass.states[this.config.description].state : this.weather.attributes.description;
         }
 
         if (this.weather && !this.forecastSubscriber) {
@@ -169,12 +198,12 @@ export class WeatherChartCard extends LitElement {
     }
 
     subscribeForecastEvents() {
-        const forecastType = this.config.forecast.type;
+        const forecastType = this.config?.forecast.type;
         const isHourly = forecastType === 'hourly';
 
         const feature = isHourly ? WeatherEntityFeature.FORECAST_HOURLY : WeatherEntityFeature.FORECAST_DAILY;
         if (!this.supportsFeature(feature)) {
-            console.error(`Weather entity "${this.config.entity}" does not support ${isHourly ? 'hourly' : 'daily'} forecasts.`);
+            console.error(`Weather entity "${this.config?.entity}" does not support ${isHourly ? 'hourly' : 'daily'} forecasts.`);
             return;
         }
 
@@ -187,7 +216,7 @@ export class WeatherChartCard extends LitElement {
         this.forecastSubscriber = this._hass.connection.subscribeMessage(callback, {
             type: "weather/subscribe_forecast",
             forecast_type: isHourly ? 'hourly' : 'daily',
-            entity_id: this.config.entity,
+            entity_id: this.config?.entity,
         });
     }
 
@@ -243,8 +272,8 @@ export class WeatherChartCard extends LitElement {
 
     measureCard() {
         const card = this.shadowRoot?.querySelector('ha-card');
-        const fontSize = this.config.forecast.labels_font_size;
-        const numberOfForecasts = this.config.forecast.number_of_forecasts || 0;
+        const fontSize = this.config?.forecast.labels_font_size ?? 11;
+        const numberOfForecasts = this.config?.forecast.number_of_forecasts ?? 0;
 
         if (!card) {
             return;
@@ -256,7 +285,7 @@ export class WeatherChartCard extends LitElement {
     }
 
     ll(str: string) {
-        const selectedLocale = (this.config.locale ?? this.language) || 'en';
+        const selectedLocale = (this.config?.locale ?? this.language) ?? 'en';
 
         if (locale[selectedLocale] === undefined) {
             return locale.en?.[str];
@@ -275,12 +304,12 @@ export class WeatherChartCard extends LitElement {
     }
 
     getWeatherIcon(condition: string, sun: string) {
-        if (this.config.animated_icons) {
+        if (this.config?.animated_icons) {
             const iconName = sun === 'below_horizon' ? weatherIconsNight[condition] : weatherIconsDay[condition];
             return `${this.baseIconPath}${iconName}.svg`;
-        } else if (this.config.icons) {
+        } else if (this.config?.icons) {
             const iconName = sun === 'below_horizon' ? weatherIconsNight[condition] : weatherIconsDay[condition];
-            return `${this.config.icons}${iconName}.svg`;
+            return `${this.config?.icons}${iconName}.svg`;
         }
         return weatherIcons[condition];
     }
@@ -402,7 +431,7 @@ export class WeatherChartCard extends LitElement {
         await new Promise(resolve => setTimeout(resolve, 0));
         this.drawChart();
 
-        if (this.config.autoscroll) {
+        if (this.config?.autoscroll) {
             this.autoscroll();
         }
     }
@@ -414,9 +443,9 @@ export class WeatherChartCard extends LitElement {
         if (changedProperties.has('config')) {
             const oldConfig = changedProperties.get('config');
 
-            const entityChanged = oldConfig && this.config.entity !== oldConfig.entity;
-            const forecastTypeChanged = oldConfig && this.config.forecast.type !== oldConfig.forecast.type;
-            const autoscrollChanged = oldConfig && this.config.autoscroll !== oldConfig.autoscroll;
+            const entityChanged = oldConfig && this.config?.entity !== oldConfig.entity;
+            const forecastTypeChanged = oldConfig && this.config?.forecast.type !== oldConfig.forecast.type;
+            const autoscrollChanged = oldConfig && this.config?.autoscroll !== oldConfig.autoscroll;
 
             if (entityChanged || forecastTypeChanged) {
                 if (this.forecastSubscriber) {
@@ -431,7 +460,7 @@ export class WeatherChartCard extends LitElement {
             }
 
             if (autoscrollChanged) {
-                if (!this.config.autoscroll) {
+                if (!this.config?.autoscroll) {
                     this.autoscroll();
                 } else {
                     this.cancelAutoscroll();
@@ -491,7 +520,7 @@ export class WeatherChartCard extends LitElement {
         const tempUnit = this._hass.config.unit_system.temperature;
         const lengthUnit = this._hass.config.unit_system.length;
         let precipUnit;
-        if (config.forecast.precipitation_type === 'probability') {
+        if (config?.forecast.precipitation_type === 'probability') {
             precipUnit = '%';
         } else {
             precipUnit = lengthUnit === 'km' ? this.units.mm : this.units.in;
@@ -512,10 +541,10 @@ export class WeatherChartCard extends LitElement {
 
         let precipMax;
 
-        if (config.forecast.precipitation_type === 'probability') {
+        if (config?.forecast.precipitation_type === 'probability') {
             precipMax = 100;
         } else {
-            if (config.forecast.type === 'hourly') {
+            if (config?.forecast.type === 'hourly') {
                 precipMax = lengthUnit === 'km' ? 4 : 1;
             } else {
                 precipMax = lengthUnit === 'km' ? 20 : 1;
@@ -536,25 +565,25 @@ export class WeatherChartCard extends LitElement {
                 type: 'line',
                 data: data.tempHigh,
                 yAxisID: 'TempAxis',
-                borderColor: config.forecast.temperature1_color,
-                backgroundColor: config.forecast.temperature1_color,
+                borderColor: config?.forecast.temperature1_color,
+                backgroundColor: config?.forecast.temperature1_color,
             },
             {
                 label: this.ll('tempLo') as string,
                 type: 'line',
                 data: data.tempLow,
                 yAxisID: 'TempAxis',
-                borderColor: config.forecast.temperature2_color,
-                backgroundColor: config.forecast.temperature2_color,
+                borderColor: config?.forecast.temperature2_color,
+                backgroundColor: config?.forecast.temperature2_color,
             },
             {
                 label: this.ll('precip') as string,
                 type: 'bar',
                 data: data.precip,
                 yAxisID: 'PrecipAxis',
-                borderColor: config.forecast.precipitation_color,
-                backgroundColor: config.forecast.precipitation_color,
-                barPercentage: config.forecast.precip_bar_size / 100,
+                borderColor: config?.forecast.precipitation_color,
+                backgroundColor: config?.forecast.precipitation_color,
+                barPercentage: (config?.forecast.precip_bar_size ?? 0) / 100,
                 categoryPercentage: 1.0,
                 datalabels: {
                     display: function (context: Context) {
@@ -562,14 +591,14 @@ export class WeatherChartCard extends LitElement {
                         return rainfall > 0;
                     },
                     formatter: function (_value: any, context: Context) {
-                        const precipitationType = config.forecast.precipitation_type;
+                        const precipitationType = config?.forecast.precipitation_type;
 
                         const rainfall = context.dataset.data[context.dataIndex] as number;
                         const probability = data.forecast[context.dataIndex].precipitation_probability;
 
                         let formattedValue;
                         if (precipitationType === 'rainfall') {
-                            if (probability && config.forecast.show_probability) {
+                            if (probability && config?.forecast.show_probability) {
                                 formattedValue = `${rainfall > 9 ? Math.round(rainfall) : rainfall.toFixed(1)} ${precipUnit}\n${Math.round(probability)}%`;
                             } else {
                                 formattedValue = `${rainfall > 9 ? Math.round(rainfall) : rainfall.toFixed(1)} ${precipUnit}`;
@@ -590,9 +619,9 @@ export class WeatherChartCard extends LitElement {
             },
         ];
 
-        const chart_text_color = (config.forecast.chart_text_color === 'auto') ? textColor : config.forecast.chart_text_color;
+        const chart_text_color = (config?.forecast.chart_text_color === 'auto') ? textColor : config?.forecast.chart_text_color;
 
-        if (config.forecast.style === 'style2') {
+        if (config?.forecast.style === 'style2') {
             datasets[0].datalabels = {
                 display: function (_context) {
                     return true;
@@ -604,7 +633,7 @@ export class WeatherChartCard extends LitElement {
                 anchor: 'center',
                 backgroundColor: 'transparent',
                 borderColor: 'transparent',
-                color: chart_text_color || config.forecast.temperature1_color,
+                color: chart_text_color ?? config.forecast.temperature1_color,
                 font: {
                     size: config.forecast.labels_font_size + 1,
                     lineHeight: 0.7,
@@ -622,7 +651,7 @@ export class WeatherChartCard extends LitElement {
                 anchor: 'center',
                 backgroundColor: 'transparent',
                 borderColor: 'transparent',
-                color: chart_text_color || config.forecast.temperature2_color,
+                color: chart_text_color ?? config.forecast.temperature2_color,
                 font: {
                     size: config.forecast.labels_font_size + 1,
                     lineHeight: 0.7,
@@ -638,7 +667,7 @@ export class WeatherChartCard extends LitElement {
             },
             options: {
                 maintainAspectRatio: false,
-                animation: config.forecast.disable_animation ? { duration: 0 } : {},
+                animation: config?.forecast.disable_animation ? { duration: 0 } : {},
                 layout: {
                     padding: {
                         bottom: 10,
@@ -656,20 +685,21 @@ export class WeatherChartCard extends LitElement {
                         },
                         ticks: {
                             maxRotation: 0,
-                            color: config.forecast.chart_datetime_color ?? textColor,
-                            padding: config.forecast.precipitation_type === 'rainfall' && config.forecast.show_probability && config.forecast.type !== 'hourly' ? 4 : 10,
-                            callback: function (value) {
-                                const dateObj = new Date(value);
+                            color: config?.forecast.chart_datetime_color ?? textColor,
+                            padding: config?.forecast.precipitation_type === 'rainfall' && config.forecast.show_probability && config.forecast.type !== 'hourly' ? 4 : 10,
+                            callback: function (value, _index) {
+                                const dateStr = typeof value === "string" ? value : this.getLabelForValue(value as number);
+                                const dateObj = new Date(dateStr);
 
                                 const timeFormatOptions: Intl.DateTimeFormatOptions = {
-                                    hour12: config.use_12hour_format,
+                                    hour12: config?.use_12hour_format,
                                     hour: 'numeric',
-                                    ...(config.use_12hour_format ? {} : { minute: 'numeric' }),
+                                    ...(config?.use_12hour_format ? {} : { minute: 'numeric' }),
                                 };
 
                                 let time = dateObj.toLocaleTimeString(language, timeFormatOptions);
 
-                                if (dateObj.getHours() === 0 && dateObj.getMinutes() === 0 && config.forecast.type === 'hourly') {
+                                if (dateObj.getHours() === 0 && dateObj.getMinutes() === 0 && config?.forecast.type === 'hourly') {
                                     const dateFormatOptions: Intl.DateTimeFormatOptions = {
                                         day: 'numeric',
                                         month: 'short',
@@ -679,7 +709,7 @@ export class WeatherChartCard extends LitElement {
                                     return [date, time];
                                 }
 
-                                if (config.forecast.type !== 'hourly') {
+                                if (config?.forecast.type !== 'hourly') {
                                     return dateObj.toLocaleString(language, {weekday: 'short'}).toUpperCase();
                                 }
 
@@ -723,10 +753,10 @@ export class WeatherChartCard extends LitElement {
                         borderColor: context => context.dataset.borderColor as Color,
                         borderRadius: 0,
                         borderWidth: 1.5,
-                        padding: config.forecast.precipitation_type === 'rainfall' && config.forecast.show_probability && config.forecast.type !== 'hourly' ? 3 : 4,
-                        color: chart_text_color || textColor,
+                        padding: config?.forecast.precipitation_type === 'rainfall' && config.forecast.show_probability && config.forecast.type !== 'hourly' ? 3 : 4,
+                        color: chart_text_color ?? textColor,
                         font: {
-                            size: config.forecast.labels_font_size,
+                            size: config?.forecast.labels_font_size,
                             lineHeight: 0.7,
                         },
                         formatter: function (_value, context) {
@@ -745,7 +775,7 @@ export class WeatherChartCard extends LitElement {
                                     weekday: 'short',
                                     hour: 'numeric',
                                     minute: 'numeric',
-                                    hour12: config.use_12hour_format,
+                                    hour12: config?.use_12hour_format,
                                 });
                             },
                             label: function (context) {
@@ -754,7 +784,7 @@ export class WeatherChartCard extends LitElement {
                                 const probability = data.forecast[context.dataIndex].precipitation_probability;
                                 const unit = context.datasetIndex === 2 ? precipUnit : tempUnit;
 
-                                if (config.forecast.precipitation_type === 'rainfall' && context.datasetIndex === 2 && config.forecast.show_probability && probability) {
+                                if (config?.forecast.precipitation_type === 'rainfall' && context.datasetIndex === 2 && config.forecast.show_probability && probability) {
                                     return label + ': ' + value + ' ' + precipUnit + ' / ' + Math.round(probability) + '%';
                                 } else {
                                     return label + ': ' + value + ' ' + unit;
@@ -769,7 +799,7 @@ export class WeatherChartCard extends LitElement {
 
     computeForecastData({ config, forecastItems } = this) {
         const forecast = this.forecasts ? this.forecasts.slice(0, forecastItems) : [];
-        const roundTemp = config.forecast.round_temp;
+        const roundTemp = config?.forecast.round_temp;
         const dateTime = [];
         const tempHigh = [];
         const tempLow = [];
@@ -777,7 +807,7 @@ export class WeatherChartCard extends LitElement {
 
         for (let i = 0; i < forecast.length; i++) {
             const d = forecast[i];
-            if (config.autoscroll) {
+            if (config?.autoscroll) {
                 const cutoff = (config.forecast.type === 'hourly' ? 1 : 24) * 60 * 60 * 1000;
                 if (Date.now() - new Date(d.datetime).getTime() > cutoff) {
                     continue;
@@ -795,7 +825,7 @@ export class WeatherChartCard extends LitElement {
                     tempLow[i] = Math.round(tempLow[i]);
                 }
             }
-            if (config.forecast.precipitation_type === 'probability') {
+            if (config?.forecast.precipitation_type === 'probability') {
                 precip.push(d.precipitation_probability ?? 0);
             } else {
                 precip.push(d.precipitation ?? 0);
@@ -999,7 +1029,7 @@ export class WeatherChartCard extends LitElement {
     }
 
     renderMain({ config, sun, weather, temperature, feels_like, description } = this) {
-        if (!config.show_main)
+        if (!config?.show_main)
             return html``;
 
         const use12HourFormat = config.use_12hour_format;
@@ -1157,7 +1187,7 @@ export class WeatherChartCard extends LitElement {
             }
         }
 
-        if (!config.show_attributes)
+        if (!config?.show_attributes)
             return html``;
 
         const showHumidity = config.show_humidity;
@@ -1225,7 +1255,7 @@ export class WeatherChartCard extends LitElement {
             return html``;
         }
 
-        const use12HourFormat = this.config.use_12hour_format;
+        const use12HourFormat = this.config?.use_12hour_format;
         const timeOptions: Intl.DateTimeFormatOptions = {
             hour12: use12HourFormat,
             hour: 'numeric',
@@ -1243,7 +1273,7 @@ export class WeatherChartCard extends LitElement {
     renderForecastConditionIcons({ config, forecastItems, sun } = this) {
         const forecast = this.forecasts ? this.forecasts.slice(0, forecastItems) : [];
 
-        if (!config.forecast.condition_icons) {
+        if (!config?.forecast.condition_icons) {
             return html``;
         }
 
@@ -1283,7 +1313,7 @@ export class WeatherChartCard extends LitElement {
                     if (config.animated_icons || config.icons) {
                         const iconSrc = config.animated_icons ?
                                 `${this.baseIconPath}${weatherIcons[condition]}.svg` :
-                                `${this.config.icons}${weatherIcons[condition]}.svg`;
+                                `${this.config?.icons}${weatherIcons[condition]}.svg`;
                         iconHtml = html`<img class="icon" src="${iconSrc}" alt="">`;
                     } else {
                         iconHtml = html`<ha-icon icon="${this.getWeatherIcon(condition, sun!.state)}"></ha-icon>`;
@@ -1300,7 +1330,7 @@ export class WeatherChartCard extends LitElement {
     }
 
     renderWind({ config, forecastItems } = this) {
-        const showWindForecast = config.forecast.show_wind_forecast;
+        const showWindForecast = config?.forecast.show_wind_forecast;
 
         if (!showWindForecast) {
             return html``;
@@ -1374,7 +1404,7 @@ export class WeatherChartCard extends LitElement {
             formattedLastUpdated = formatter.format(-minutesAgo, 'minute');
         }
 
-        const showLastUpdated = this.config.show_last_changed;
+        const showLastUpdated = this.config?.show_last_changed;
 
         if (!showLastUpdated) {
             return html``;
@@ -1412,5 +1442,5 @@ window.customCards.push({
     name: "Weather Chart Card",
     description: "A custom weather card with chart.",
     preview: true,
-    documentationURL: "https://github.com/mlamberts78/weather-chart-card",
+    documentationURL: "https://github.com/smitterson/weather-chart-card",
 });

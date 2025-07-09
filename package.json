@@ -45,7 +45,6 @@
     "postcss-preset-env": "^10.1.6",
     "rollup": "^4.9.6",
     "rollup-plugin-copy": "^3.5.0",
-    "rollup-plugin-gzip": "^4.0.0",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-postcss-lit": "^2.2.0",
     "rollup-plugin-serve": "^3.0.0",

@@ -206,7 +206,8 @@ const locale: Translations = {
       'hPa': 'hPa',
       'mmHg': 'mm Hg',
       'mm': 'mm',
-      'in': 'in'
+      'in': 'in',
+      'inHg': 'inHg'
     },
     'cardinalDirections': {
       'N': 'N',

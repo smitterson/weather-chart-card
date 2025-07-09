@@ -13,14 +13,13 @@ import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
 import serve from 'rollup-plugin-serve';
 import copy from "rollup-plugin-copy";
-import gzipPlugin from 'rollup-plugin-gzip';
 
 const IS_DEV = process.env.ROLLUP_WATCH;
 
 const serverOptions = {
   contentBase: ['./dist'],
   host: 'localhost',
-  port: 5000,
+  port: 5001,
   allowCrossOrigin: true,
   headers: {
     'Access-Control-Allow-Origin': '*',
@@ -57,7 +56,6 @@ const plugins = [
   }),
   IS_DEV && serve(serverOptions),
   !IS_DEV && terser(),
-  gzipPlugin(),
   copy({
     targets: [
       { src: 'src/icons/*', dest: 'dist/icons' },
@@ -73,5 +71,6 @@ export default {
     format: 'es',
     inlineDynamicImports: true,
   },
+  context: 'window',
   plugins
 };

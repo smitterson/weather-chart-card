@@ -21,7 +21,7 @@ const ALT_SCHEMA = [
 export class WeatherChartCardEditor extends LitElement implements LovelaceCardEditor {
     @property({ attribute: false }) public hass!: HomeAssistant;
 
-    @state() private _config!: WeatherChartCardConfig;
+    @state() private _config?: WeatherChartCardConfig;
     @state() private currentPage: string;
     @state() private _entity: string;
     @state() private entities: any[];
@@ -144,13 +144,13 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
             if (target.checked !== undefined) {
                 currentLevel[finalKey] = target.checked;
             } else {
-                currentLevel[finalKey] = target.value;
+                currentLevel[finalKey] = target.value === '' ? undefined : target.value;
             }
         } else {
             if (target.checked !== undefined) {
                 newConfig[key] = target.checked;
             } else {
-                newConfig[key] = target.value;
+                newConfig[key] = target.value === '' ? undefined : target.value;
             }
         }
 
@@ -209,9 +209,6 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
         if (this._config && this._config.entity !== this._entity) {
             this._entity = this._config.entity;
         }
-        const forecastConfig = this._config.forecast || {};
-        const unitsConfig = this._config.units || {};
-
         return html`
             <style>
                 .switch-label {
@@ -294,7 +291,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     </ha-select>
                     <ha-textfield
                         label="Title"
-                        .value="${this._config.title ?? ''}"
+                        .value="${this._config?.title ?? ''}"
                         @change="${(e: Event) => this._valueChanged(e, 'title')}"
                     ></ha-textfield>
                 </div>
@@ -306,7 +303,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         name="type"
                         value="daily"
                         @change="${this._handleTypeChange}"
-                        .checked="${forecastConfig.type === 'daily'}"
+                        .checked="${this._config?.forecast.type === 'daily'}"
                     ></ha-radio>
                     <label class="check-label">
                         Daily forecast
@@ -318,7 +315,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         name="type"
                         value="hourly"
                         @change="${this._handleTypeChange}"
-                        .checked="${forecastConfig.type === 'hourly'}"
+                        .checked="${this._config?.forecast.type === 'hourly'}"
                     ></ha-radio>
                     <label class="check-label">
                         Hourly forecast
@@ -332,7 +329,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                             name="style"
                             value="style1"
                             @change="${this._handleStyleChange}"
-                            .checked="${forecastConfig.style === 'style1'}"
+                            .checked="${this._config?.forecast.style === 'style1'}"
                         ></ha-radio>
                         <label class="check-label">
                             Chart style 1
@@ -344,7 +341,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                             name="style"
                             value="style2"
                             @change="${this._handleStyleChange}"
-                            .checked="${forecastConfig.style === 'style2'}"
+                            .checked="${this._config?.forecast.style === 'style2'}"
                         ></ha-radio>
                         <label class="check-label">
                             Chart style 2
@@ -366,7 +363,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_main')}"
-                            .checked="${(this._config.show_main)}"
+                            .checked="${(this._config?.show_main)}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Main
@@ -376,7 +373,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         ${this.hasApparentTemperature ? html`
                             <ha-switch
                                 @change="${(e: Event) => this._valueChanged(e, 'show_feels_like')}"
-                                .checked="${(this._config.show_feels_like)}"
+                                .checked="${(this._config?.show_feels_like)}"
                             ></ha-switch>
                             <label class="switch-label">
                                 Show Feels Like Temperature
@@ -387,7 +384,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         ${this.hasDescription ? html`
                             <ha-switch
                                 @change="${(e: Event) => this._valueChanged(e, 'show_description')}"
-                                .checked="${(this._config.show_description)}"
+                                .checked="${(this._config?.show_description)}"
                             ></ha-switch>
                             <label class="switch-label">
                                 Show Weather Description
@@ -397,7 +394,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_temperature')}"
-                            .checked="${(this._config.show_temperature)}"
+                            .checked="${(this._config?.show_temperature)}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Current Temperature
@@ -406,7 +403,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_current_condition')}"
-                            .checked="${this._config.show_current_condition}"
+                            .checked="${this._config?.show_current_condition}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Current Weather Condition
@@ -415,7 +412,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_attributes')}"
-                            .checked="${this._config.show_attributes}"
+                            .checked="${this._config?.show_attributes}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Attributes
@@ -424,7 +421,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_humidity')}"
-                            .checked="${this._config.show_humidity}"
+                            .checked="${this._config?.show_humidity}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Humidity
@@ -433,7 +430,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_pressure')}"
-                            .checked="${this._config.show_pressure}"
+                            .checked="${this._config?.show_pressure}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Pressure
@@ -442,7 +439,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_sun')}"
-                            .checked="${this._config.show_sun}"
+                            .checked="${this._config?.show_sun}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Sun
@@ -451,7 +448,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_wind_direction')}"
-                            .checked="${this._config.show_wind_direction}"
+                            .checked="${this._config?.show_wind_direction}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Wind Direction
@@ -460,7 +457,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_wind_speed')}"
-                            .checked="${this._config.show_wind_speed}"
+                            .checked="${this._config?.show_wind_speed}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Wind Speed
@@ -470,7 +467,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         ${this.hasDewpoint ? html`
                             <ha-switch
                                 @change="${(e: Event) => this._valueChanged(e, 'show_dew_point')}"
-                                .checked="${this._config.show_dew_point}"
+                                .checked="${this._config?.show_dew_point}"
                             ></ha-switch>
                             <label class="switch-label">
                                 Show Dew Point
@@ -481,7 +478,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         ${this.hasWindgustspeed ? html`
                             <ha-switch
                                 @change="${(e: Event) => this._valueChanged(e, 'show_wind_gust_speed')}"
-                                .checked="${this._config.show_wind_gust_speed}"
+                                .checked="${this._config?.show_wind_gust_speed}"
                             ></ha-switch>
                             <label class="switch-label">
                                 Show Wind Gust Speed
@@ -492,7 +489,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         ${this.hasVisibility ? html`
                             <ha-switch
                                 @change="${(e: Event) => this._valueChanged(e, 'show_visibility')}"
-                                .checked="${this._config.show_visibility}"
+                                .checked="${this._config?.show_visibility}"
                             ></ha-switch>
                             <label class="switch-label">
                                 Show Visibility
@@ -502,7 +499,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'show_last_changed')}"
-                            .checked="${this._config.show_last_changed}"
+                            .checked="${this._config?.show_last_changed}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show when last data changed
@@ -511,7 +508,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'use_12hour_format')}"
-                            .checked="${this._config.use_12hour_format}"
+                            .checked="${this._config?.use_12hour_format}"
                         ></ha-switch>
                         <label class="switch-label">
                             Use 12-Hour Format
@@ -520,7 +517,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'autoscroll')}"
-                            .checked="${this._config.autoscroll}"
+                            .checked="${this._config?.autoscroll}"
                         ></ha-switch>
                         <label class="switch-label">
                             Autoscroll
@@ -530,51 +527,51 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         <div class="switch-right">
                             <ha-switch
                                 @change="${(e: Event) => this._valueChanged(e, 'show_time')}"
-                                .checked="${this._config.show_time}"
+                                .checked="${this._config?.show_time}"
                             ></ha-switch>
                             <label class="switch-label">
                                 Show Current Time
                             </label>
                         </div>
-                        <div class="switch-right checkbox-container" style="${this._config.show_time ? 'display: flex;' : 'display: none;'}">
+                        <div class="switch-right checkbox-container" style="${this._config?.show_time ? 'display: flex;' : 'display: none;'}">
                             <ha-checkbox
                                 @change="${(e: Event) => this._valueChanged(e, 'show_time_seconds')}"
-                                .checked="${this._config.show_time_seconds}"
+                                .checked="${this._config?.show_time_seconds}"
                             ></ha-checkbox>
                             <label class="check-label">
                                 Show Seconds
                             </label>
                         </div>
-                        <div class="switch-right checkbox-container" style="${this._config.show_time ? 'display: flex;' : 'display: none;'}">
+                        <div class="switch-right checkbox-container" style="${this._config?.show_time ? 'display: flex;' : 'display: none;'}">
                             <ha-checkbox
                                 @change="${(e: Event) => this._valueChanged(e, 'show_day')}"
-                                .checked="${this._config.show_day}"
+                                .checked="${this._config?.show_day}"
                             ></ha-checkbox>
                             <label class="check-label">
                                 Show Day
                             </label>
                         </div>
-                        <div class="switch-right checkbox-container" style="${this._config.show_time ? 'display: flex;' : 'display: none;'}">
+                        <div class="switch-right checkbox-container" style="${this._config?.show_time ? 'display: flex;' : 'display: none;'}">
                             <ha-checkbox
                                 @change="${(e: Event) => this._valueChanged(e, 'show_date')}"
-                                .checked="${this._config.show_date}"
+                                .checked="${this._config?.show_date}"
                             ></ha-checkbox>
                             <label class="check-label">
                                 Show Date
                             </label>
                         </div>
                     </div>
-                    <div class="flex-container" style="${this._config.show_time ? 'display: flex;' : 'display: none;'}">
+                    <div class="flex-container" style="${this._config?.show_time ? 'display: flex;' : 'display: none;'}">
                         <ha-textfield
                             label="Time text size"
                             type="number"
-                            .value="${this._config.time_size || '26'}"
+                            .value="${this._config?.time_size ?? 26}"
                             @change="${(e: Event) => this._valueChanged(e, 'time_size')}"
                         ></ha-textfield>
                         <ha-textfield
                             label="Day and date text size"
                             type="number"
-                            .value="${this._config.day_date_size || '15'}"
+                            .value="${this._config?.day_date_size ?? 15}"
                             @change="${(e: Event) => this._valueChanged(e, 'day_date_size')}"
                         ></ha-textfield>
                     </div>
@@ -582,29 +579,29 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         <div class="switch-right">
                             <ha-switch
                                 @change="${(e: Event) => this._valueChanged(e, 'animated_icons')}"
-                                .checked="${this._config.animated_icons}"
+                                .checked="${this._config?.animated_icons}"
                             ></ha-switch>
                             <label class="switch-label">
                                 Use Animated Icons
                             </label>
                         </div>
-                        <div class="switch-right radio-container" style="${this._config.animated_icons ? 'display: flex;' : 'display: none;'}">
+                        <div class="switch-right radio-container" style="${this._config?.animated_icons ? 'display: flex;' : 'display: none;'}">
                             <ha-radio
                                 name="icon_style"
                                 value="style1"
                                 @change="${this._handleIconStyleChange}"
-                                .checked="${this._config.icon_style === 'style1'}"
+                                .checked="${this._config?.icon_style === 'style1'}"
                             ></ha-radio>
                             <label class="check-label">
                                 Style 1
                             </label>
                         </div>
-                        <div class="switch-right radio-container" style="${this._config.animated_icons ? 'display: flex;' : 'display: none;'}">
+                        <div class="switch-right radio-container" style="${this._config?.animated_icons ? 'display: flex;' : 'display: none;'}">
                             <ha-radio
                                 name="icon_style"
                                 value="style2"
                                 @change="${this._handleIconStyleChange}"
-                                .checked="${this._config.icon_style === 'style2'}"
+                                .checked="${this._config?.icon_style === 'style2'}"
                             ></ha-radio>
                             <label class="check-label">
                                 Style 2
@@ -615,18 +612,18 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                         <ha-textfield
                             label="Icon Size for animated or custom icons"
                             type="number"
-                            .value="${this._config.icons_size || '25'}"
+                            .value="${this._config?.icons_size ?? 25}"
                             @change="${(e: Event) => this._valueChanged(e, 'icons_size')}"
                         ></ha-textfield>
                         <ha-textfield
                             label="Curent temperature Font Size"
                             type="number"
-                            .value="${this._config.current_temp_size || '28'}"
+                            .value="${this._config?.current_temp_size ?? 28}"
                             @change="${(e: Event) => this._valueChanged(e, 'current_temp_size')}"
                         ></ha-textfield>
                         <ha-textfield
                             label="Custom icon path"
-                            .value="${this._config.icons ?? ''}"
+                            .value="${this._config?.icons ?? ''}"
                             @change="${(e: Event) => this._valueChanged(e, 'icons')}"
                         ></ha-textfield>
                         <ha-select
@@ -634,7 +631,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                             fixedMenuPosition
                             label="Select custom language"
                             .configValue=${''}
-                                    .value=${this._config.locale}
+                                    .value=${this._config?.locale}
                             @change=${(e: Event) => this._valueChanged(e, 'locale')}
                             @closed=${(ev: Event) => ev.stopPropagation()}
                         >
@@ -671,7 +668,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'forecast.condition_icons')}"
-                            .checked="${forecastConfig.condition_icons}"
+                            .checked="${this._config?.forecast?.condition_icons}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Condition Icons
@@ -680,7 +677,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'forecast.show_wind_forecast')}"
-                            .checked="${forecastConfig.show_wind_forecast}"
+                            .checked="${this._config?.forecast.show_wind_forecast}"
                         ></ha-switch>
                         <label class="switch-label">
                             Show Wind Forecast
@@ -689,7 +686,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'forecast.round_temp')}"
-                            .checked="${forecastConfig.round_temp}"
+                            .checked="${this._config?.forecast.round_temp}"
                         ></ha-switch>
                         <label class="switch-label">
                             Rounding Temperatures
@@ -698,7 +695,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                     <div class="switch-container">
                         <ha-switch
                             @change="${(e: Event) => this._valueChanged(e, 'forecast.disable_animation')}"
-                            .checked="${forecastConfig.disable_animation}"
+                            .checked="${this._config?.forecast.disable_animation}"
                         ></ha-switch>
                         <label class="switch-label">
                             Disable Chart Animation
@@ -710,17 +707,17 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                             fixedMenuPosition
                             label="Precipitation Type (Probability if supported by the weather entity)"
                             .configValue=${'forecast.precipitation_type'}
-                            .value=${forecastConfig.precipitation_type}
+                            .value=${this._config?.forecast.precipitation_type}
                             @change=${(e: Event) => this._valueChanged(e, 'forecast.precipitation_type')}
                             @closed=${(ev: Event) => ev.stopPropagation()}
                         >
                             <ha-list-item .value=${'rainfall'}>Rainfall</ha-list-item>
                             <ha-list-item .value=${'probability'}>Probability</ha-list-item>
                         </ha-select>
-                        <div class="switch-container" ?hidden=${forecastConfig.precipitation_type !== 'rainfall'}>
+                        <div class="switch-container" ?hidden=${this._config?.forecast.precipitation_type !== 'rainfall'}>
                             <ha-switch
                                 @change="${(e: Event) => this._valueChanged(e, 'forecast.show_probability')}"
-                                .checked="${forecastConfig.show_probability}"
+                                .checked="${this._config?.forecast.show_probability}"
                             ></ha-switch>
                             <label class="switch-label">
                                 Show precipitation probability
@@ -733,13 +730,13 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                                     type="number"
                                     max="100"
                                     min="0"
-                                    .value="${forecastConfig.precip_bar_size || '100'}"
+                                    .value="${this._config?.forecast.precip_bar_size ?? 100}"
                                     @change="${(e: Event) => this._valueChanged(e, 'forecast.precip_bar_size')}"
                                 ></ha-textfield>
                                 <ha-textfield
                                     label="Labels Font Size"
                                     type="number"
-                                    .value="${forecastConfig.labels_font_size || '11'}"
+                                    .value="${this._config?.forecast.labels_font_size ?? 11}"
                                     @change="${(e: Event) => this._valueChanged(e, 'forecast.labels_font_size')}"
                                 ></ha-textfield>
                             </div>
@@ -747,13 +744,13 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                                 <ha-textfield
                                     label="Chart height"
                                     type="number"
-                                    .value="${forecastConfig.chart_height || '180'}"
+                                    .value="${this._config?.forecast.chart_height ?? 180}"
                                     @change="${(e: Event) => this._valueChanged(e, 'forecast.chart_height')}"
                                 ></ha-textfield>
                                 <ha-textfield
                                     label="Number of forecasts"
                                     type="number"
-                                    .value="${forecastConfig.number_of_forecasts || '0'}"
+                                    .value="${this._config?.forecast.number_of_forecasts ?? 0}"
                                     @change="${(e: Event) => this._valueChanged(e, 'forecast.number_of_forecasts')}"
                                 ></ha-textfield>
                             </div>
@@ -769,7 +766,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                             fixedMenuPosition
                             label="Convert pressure to"
                             .configValue=${'units.pressure'}
-                            .value=${unitsConfig.pressure}
+                            .value=${this._config?.units.pressure}
                             @change=${(e: Event) => this._valueChanged(e, 'units.pressure')}
                             @closed=${(ev: Event) => ev.stopPropagation()}
                         >
@@ -782,7 +779,7 @@ export class WeatherChartCardEditor extends LitElement implements LovelaceCardEd
                             fixedMenuPosition
                             label="Convert wind speed to"
                             .configValue=${'units.speed'}
-                            .value=${unitsConfig.speed}
+                            .value=${this._config?.units.speed}
                             @change=${(e: Event) => this._valueChanged(e, 'units.speed')}
                             @closed=${(ev: Event) => ev.stopPropagation()}
                         >
