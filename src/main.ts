@@ -209,6 +209,9 @@ export class WeatherChartCard extends LitElement {
 
         const callback = (event: ForecastEvent) => {
             this.forecasts = event.forecast;
+            if (this.config?.autoscroll) {
+                this.removeOutdatedForecasts();
+            }
             this.requestUpdate();
             this.drawChart();
         };
@@ -489,6 +492,7 @@ export class WeatherChartCard extends LitElement {
             );
             this.autoscrollTimeout = setTimeout(() => {
                 this.autoscrollTimeout = null;
+                this.removeOutdatedForecasts();
                 this.updateChart();
                 updateChartOncePerHour();
             }, nextHour.getTime() - now.getTime());
@@ -501,6 +505,14 @@ export class WeatherChartCard extends LitElement {
         if (this.autoscrollTimeout) {
             clearTimeout(this.autoscrollTimeout);
         }
+    }
+
+    removeOutdatedForecasts({ config, forecasts } = this) {
+        if (!config) return;
+
+        const now = Date.now();
+        const cutoff = (config.forecast.type === 'hourly' ? 1 : 24) * 60 * 60 * 1000;
+        this.forecasts = forecasts.filter((f) => now - new Date(f.datetime).getTime() <= cutoff);
     }
 
     drawChart({ config, language } = this) {
@@ -807,12 +819,6 @@ export class WeatherChartCard extends LitElement {
 
         for (let i = 0; i < forecast.length; i++) {
             const d = forecast[i];
-            if (config?.autoscroll) {
-                const cutoff = (config.forecast.type === 'hourly' ? 1 : 24) * 60 * 60 * 1000;
-                if (Date.now() - new Date(d.datetime).getTime() > cutoff) {
-                    continue;
-                }
-            }
             dateTime.push(d.datetime);
             tempHigh.push(d.temperature);
             if (typeof d.templow !== 'undefined') {
