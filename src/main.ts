@@ -1282,8 +1282,8 @@ export class WeatherChartCard extends LitElement {
                         ` : ''}
                         ${showWindSpeed && dWindSpeed && this.unitSpeed ? html`
                             <div
-                                @click="${() => { if (config.winddir) this.showMoreInfo(config.winddir); }}"
-                                class="${config.winddir ? 'more-info' : '' }"
+                                @click="${() => { if (config.windspeed) this.showMoreInfo(config.windspeed); }}"
+                                class="${config.windspeed ? 'more-info' : '' }"
                             >
                                 <ha-icon icon="hass:weather-windy"></ha-icon> ${dWindSpeed} ${this.units[this.unitSpeed]}
                             </div>
