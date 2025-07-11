@@ -1017,6 +1017,9 @@ export class WeatherChartCard extends LitElement {
                     font-weight: 300;
                     margin-bottom: 1px;
                 }
+                .more-info {
+                    cursor: pointer;
+                }
             </style>
 
             <ha-card header="${config.title}">
@@ -1106,7 +1109,14 @@ export class WeatherChartCard extends LitElement {
                 ${iconHtml}
                 <div>
                     <div>
-                        ${showTemperature ? html`${roundedTemperature}<span>${this.getUnit('temperature')}</span>` : ''}
+                        ${showTemperature ? html`
+                            <div 
+                                @click="${() => { if (config.temp) this.showMoreInfo(config.temp); }}"
+                                class="${config.temp ? 'more-info' : '' }"
+                            >
+                                ${roundedTemperature}<span>${this.getUnit('temperature')}</span>
+                            </div>
+                        ` : ''}
                         ${showFeelsLike && roundedFeelsLike ? html`
                             <div class="feels-like">
                                 ${this.ll('feelsLike')}
@@ -1210,23 +1220,46 @@ export class WeatherChartCard extends LitElement {
                 ${((showHumidity && humidity) || (showPressure && dPressure) || (showDewpoint && dew_point) || (showVisibility && visibility)) ? html`
                     <div>
                         ${showHumidity && humidity ? html`
-                            <ha-icon icon="hass:water-percent"></ha-icon> ${humidity} %<br>
+                            <div
+                                @click="${() => { if (config.humid) this.showMoreInfo(config.humid); }}"
+                                class="${config.humid ? 'more-info' : '' }"
+                            >
+                                <ha-icon icon="hass:water-percent"></ha-icon> ${humidity} %
+                            </div>
                         ` : ''}
                         ${showPressure && dPressure && this.unitPressure ? html`
-                            <ha-icon icon="hass:gauge"></ha-icon> ${dPressure} ${this.units[this.unitPressure]} <br>
+                            <div
+                                @click="${() => { if (config.press) this.showMoreInfo(config.press); }}"
+                                class="${config.press ? 'more-info' : '' }"
+                            >
+                                <ha-icon icon="hass:gauge"></ha-icon> ${dPressure} ${this.units[this.unitPressure]}
+                            </div>
                         ` : ''}
                         ${showDewpoint && dew_point ? html`
-                            <ha-icon icon="hass:thermometer-water"></ha-icon> ${dew_point} ${this.weather?.attributes.temperature_unit} <br>
+                            <div
+                                @click="${() => { if (config.dew_point) this.showMoreInfo(config.dew_point); }}"
+                                class="${config.dew_point ? 'more-info' : '' }"
+                            >
+                                <ha-icon icon="hass:thermometer-water"></ha-icon> ${dew_point} ${this.weather?.attributes.temperature_unit}
+                            </div>
                         ` : ''}
                         ${showVisibility && visibility ? html`
-                            <ha-icon icon="hass:eye"></ha-icon> ${visibility} ${this.weather?.attributes.visibility_unit}
+                            <div
+                                @click="${() => { if (config.visibility) this.showMoreInfo(config.visibility); }}"
+                                class="${config.visibility ? 'more-info' : '' }"
+                            >
+                                <ha-icon icon="hass:eye"></ha-icon> ${visibility} ${this.weather?.attributes.visibility_unit}
+                            </div>
                         ` : ''}
                     </div>
                 ` : ''}
                 ${((showSun && sun) || (uv_index)) ? html`
                     <div>
                         ${uv_index ? html`
-                            <div>
+                            <div
+                                @click="${() => { if (config.uv) this.showMoreInfo(config.uv); }}"
+                                class="${config.uv ? 'more-info' : '' }"
+                            >
                                 <ha-icon icon="hass:white-balance-sunny"></ha-icon> UV: ${Math.round(uv_index * 10) / 10}
                             </div>
                         ` : ''}
@@ -1240,15 +1273,28 @@ export class WeatherChartCard extends LitElement {
                 ${((showWindDirection && windDirection) || (showWindSpeed && dWindSpeed)) ? html`
                     <div>
                         ${showWindDirection && windDirection  ? html`
-                            <ha-icon icon="hass:${this.getWindDirIcon(windDirection)}"></ha-icon> ${this.getWindDir(windDirection)} <br>
+                            <div
+                                @click="${() => { if (config.winddir) this.showMoreInfo(config.winddir); }}"
+                                class="${config.winddir ? 'more-info' : '' }"
+                            >
+                                <ha-icon icon="hass:${this.getWindDirIcon(windDirection)}"></ha-icon> ${this.getWindDir(windDirection)} 
+                            </div>
                         ` : ''}
                         ${showWindSpeed && dWindSpeed && this.unitSpeed ? html`
-                            <ha-icon icon="hass:weather-windy"></ha-icon>
-                            ${dWindSpeed} ${this.units[this.unitSpeed]} <br>
+                            <div
+                                @click="${() => { if (config.winddir) this.showMoreInfo(config.winddir); }}"
+                                class="${config.winddir ? 'more-info' : '' }"
+                            >
+                                <ha-icon icon="hass:weather-windy"></ha-icon> ${dWindSpeed} ${this.units[this.unitSpeed]}
+                            </div>
                         ` : ''}
                         ${showWindgustspeed && wind_gust_speed && this.unitSpeed ? html`
-                            <ha-icon icon="hass:weather-windy-variant"></ha-icon>
-                            ${wind_gust_speed} ${this.units[this.unitSpeed]}
+                            <div
+                                @click="${() => { if (config.wind_gust_speed) this.showMoreInfo(config.wind_gust_speed); }}"
+                                class="${config.wind_gust_speed ? 'more-info' : '' }"
+                            >
+                                <ha-icon icon="hass:weather-windy-variant"></ha-icon> ${wind_gust_speed} ${this.units[this.unitSpeed]}
+                            </div>
                         ` : ''}
                     </div>
                 ` : ''}
